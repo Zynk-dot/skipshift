@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>RigTools v2 Injector</title>
+  <style>
+    body { background: #111; color: #0f0; font-family: monospace; padding: 20px; }
+    textarea { width: 100%; height: 150px; background: #222; color: #0f0; border: 1px solid #555; padding: 10px; }
+    button { margin-top: 10px; padding: 10px 20px; font-weight: bold; background: #0f0; color: #000; }
+    #status { margin-top: 10px; }
+  </style>
+</head>
+<body>
+
+  <h1>RigTools v2 Web Injector</h1>
+  <textarea id="code">alert('Injected by RigTools v2!');</textarea><br>
+  <button onclick="sendCode()">Send Code</button>
+
+  <div id="status">Connecting...</div>
+
+  <script>
+    let ws;
+
+    function connect() {
+      const wssURL = "wss://relative-ram-sweet.ngrok-free.app/devtools/page/page-1"; // <-- Your fixed WSS
+
+      ws = new WebSocket(wssURL);
+
+      ws.onopen = () => {
+        document.getElementById('status').textContent = "✅ Connected to DevTools WSS!";
+      };
+
+      ws.onclose = () => {
+        document.getElementById('status').textContent = "❌ Disconnected";
+      };
+
+      ws.onerror = (err) => {
+        console.error('WebSocket error:', err);
+        document.getElementById('status').textContent = "❌ Error connecting.";
+      };
+
+      ws.onmessage = (msg) => {
+        console.log('[*] Message from server:', msg.data);
+      };
+    }
+
+    function sendCode() {
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        alert("WebSocket not connected yet!");
+        return;
+      }
+
+      const code = document.getElementById('code').value;
+      const payload = {
+        id: Date.now(),
+        method: "Runtime.evaluate",
+        params: {
+          expression: code
+        }
+      };
+
+      ws.send(JSON.stringify(payload));
+      console.log('[*] Sent code:', payload);
+    }
+
+    connect(); // Auto-connect on page load
+  </script>
+
+</body>
+</html>
